@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warwick University Sports Booking</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body,
+        html {
+            height: 100%;
+            margin: 0;
+        }
+
+        #menu-page {
+            overflow: auto;
+        }
+
+        #welcome-page {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+        }
+
+        .welcome-background {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+        }
+
+        .welcome-content {
+            z-index: 1;
+        }
+
+        .welcome-content h1 {
+            color: white;
+        }
+
+
+        #login-form,
+        #register-form {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 50%;
+            /* Center the form vertically in the middle of the page */
+            left: 50%;
+            /* Center the form horizontally in the middle of the page */
+            transform: translate(-50%, -50%);
+            /* Use the transform property for fine tuning */
+            width: 300px;
+            /* Sets the width of the form */
+            padding: 20px;
+            /* Sets the inside margins of the form */
+            background-color: rgba(190, 223, 241, 0.8);
+            /* Sets the background color and transparency of the form */
+            border-radius: 10px;
+            /* Set the rounded corners of the form */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            /* Add shadow effect */
+        }
+
+        #login-form input,
+        #register-form input,
+        #login-form button,
+        #register-form button {
+            margin: 5px;
+        }
+
+        #login-form input,
+        #register-form input {
+            padding: 10px;
+        }
+
+        #login-form button,
+        #register-form button {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        #login-form button:hover,
+        #register-form button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Welcome Page -->
+    <div id="welcome-page">
+        <img src="{{ url_for('static', filename='pic/background.jpg') }}" alt="Welcome Background"
+            class="welcome-background">
+        <div class="welcome-content">
+            <h1>Welcome to Warwick University Sports Facilities</h1>
+            <button onclick="showLoginForm()">Login</button>
+            <button onclick="showRegisterForm()">Register</button>
+        </div>
+    </div>
+
+    <!-- Login Form -->
+    <div id="login-form" style="display: none;">
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="login()">Login</button>
+    </div>
+
+    <!-- Register Form -->
+    <div id="register-form" style="display: none;">
+        <input type="text" id="new-username" placeholder="New Username">
+        <input type="password" id="new-password" placeholder="New Password">
+        <button onclick="register()">Register</button>
+    </div>
+
+    <!-- Menu Page -->
+    <div id="menu-page" style="display: none;">
+        <header>
+            <h1>Warwick Sports Facilities</h1>
+        </header>
+        <main>
+            <section id="facilities">
+                <!-- Add your menu items here -->
+                {% for facility in facilities %}
+                <div class="facility-item">
+                    <img src="{{ url_for('static', filename='pic/' + facility.image) }}" alt="{{ facility.name }}"
+                        width="150" height="100">
+                    <h2>{{ facility.name }}</h2>
+                    <p>Price: £{{ facility.price }}</p>
+                    <button onclick="addToCart('{{ facility.name }}' , {{ facility.price }})">Order</button>
+                </div>
+                {% endfor %}
+            </section>
+            <section id="cart">
+                <h2>Your booking</h2>
+                <ul id="cart-items">
+                    <!-- Cart items will be displayed here -->
+                </ul>
+                <p>Total: £<span id="total">0.00</span></p>
+                <button onclick="checkout()">Checkout</button>
+                <button onclick="calculateTotalAndOrder()">Calculate Total & Order</button>
+            </section>
+        </main>
+
+        <script>
+            var cartItems = [];
+            var users = []; // Array to store user information
+
+            // Function to show login form
+            function showLoginForm() {
+                document.getElementById('welcome-page').style.display = 'none';
+                document.getElementById('login-form').style.display = 'block';
+            }
+
+            // Function to show register form
+            function showRegisterForm() {
+                document.getElementById('welcome-page').style.display = 'none';
+                document.getElementById('register-form').style.display = 'block';
+            }
+
+            // Function to handle login
+            function login() {
+                var username = document.getElementById('username').value;
+                var password = document.getElementById('password').value;
+
+                // Check if username and password match any user in the array
+                var user = users.find(function (user) {
+                    return user.username === username && user.password === password;
+                });
+
+                if (user) {
+                    // Successful login, hide login form and show menu
+                    document.getElementById('login-form').style.display = 'none';
+                    redirectToMenu();
+                } else {
+                    // Invalid credentials, show error message
+                    alert('Invalid username or password. Please try again.');
+                }
+            }
+
+
+            // Function to handle registration
+            function register() {
+                var username = document.getElementById('new-username').value;
+                var password = document.getElementById('new-password').value;
+
+                // Check if username already exists
+                var existingUser = users.find(function (user) {
+                    return user.username === username;
+                });
+
+                if (existingUser) {
+                    // Username already exists, show error message
+                    alert('Username already exists. Please choose a different one.');
+                } else {
+                    // Add new user to the array
+                    users.push({
+                        username: username,
+                        password: password
+                    });
+                    alert('Registration successful! Please login.');
+                    // Show login form after registration
+                    document.getElementById('register-form').style.display = 'none';
+                    document.getElementById('login-form').style.display = 'block';
+                }
+            }
+
+            function addToCart(facilityName, price) {
+                cartItems.push({
+                    name: facilityName,
+                    price: price
+                });
+                updateCart();
+            }
+
+            function updateCart() {
+                var cartList = document.getElementById('cart-items');
+                var totalElement = document.getElementById('total');
+                var total = 0;
+
+                // Clear existing items in the cart
+                cartList.innerHTML = '';
+
+                // Update the cart with the current items
+                cartItems.forEach(function (item) {
+                    var listItem = document.createElement('li');
+                    listItem.textContent = item.name + ' - £' + item.price.toFixed(2);
+                    cartList.appendChild(listItem);
+                    total += item.price;
+                });
+
+                // Update the total amount
+                totalElement.textContent = total.toFixed(2);
+            }
+
+            function checkout() {
+                // Additional logic for checkout, e.g., show a confirmation message
+                alert('Order placed successfully! Please enjoy your time.');
+                // You can also implement further actions here.
+            }
+
+            function calculateTotalAndOrder() {
+                updateCart();
+                alert('Total amount is £' + parseFloat(document.getElementById('total').textContent).toFixed(2) +
+                    '. Order placed successfully!.');
+            }
+
+            function redirectToMenu() {
+                document.getElementById('welcome-page').style.display = 'none';
+                document.getElementById('menu-page').style.display = 'block';
+            }
+        </script>
+    </div>
+
+</body>
+
+</html>
